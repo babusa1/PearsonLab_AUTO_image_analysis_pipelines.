@@ -4,7 +4,7 @@
 
 **GitHub repository:** [babusa1/PearsonLab_AUTO_image_analysis_pipelines.](https://github.com/babusa1/PearsonLab_AUTO_image_analysis_pipelines.)
 
-**Developers (code flow):** [MASTER_GUIDE_DEVELOPER.md](MASTER_GUIDE_DEVELOPER.md) — Step 1→N execution table, feature-to-file map, call graph.
+**Developers (code flow):** [MASTER_GUIDE_DEVELOPER.md](MASTER_GUIDE_DEVELOPER.md) — what `pearson_cbf` is (package vs launcher), full flow from `cbf_analysis.py`, Step 1→25 table, feature-to-file map.
 
 ---
 
@@ -240,7 +240,11 @@ YOUR DATA
 
 ### `pearson_cbf/` — the Python package (the “engine”)
 
-Think of `pearson_cbf` as a **toolbox**. `run_cbf.py` is the **handle** you turn.
+`pearson_cbf` is **not one function** — it is a **folder of `.py` modules** (the real program).  
+`run_cbf.py` / `cbf_analysis.py` are short **launchers** that start it.
+
+Think of `pearson_cbf` as a **toolbox**. `run_cbf.py` is the **handle** you turn.  
+**Full code flow (diagrams + tables):** [MASTER_GUIDE_DEVELOPER.md](MASTER_GUIDE_DEVELOPER.md) Section 0.
 
 | File | Role (plain English) |
 |------|----------------------|

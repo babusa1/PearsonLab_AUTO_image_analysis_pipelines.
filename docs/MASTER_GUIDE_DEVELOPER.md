@@ -10,6 +10,110 @@
 
 ---
 
+## 0. What is `pearson_cbf`? (not a single function)
+
+`pearson_cbf` is a **Python package** — a **folder of modules** (`.py` files) that contain the real program. Think of it like an app split into chapters:
+
+| Analogy | In this project |
+|---------|-----------------|
+| App icon you tap | `run_cbf.py` or `cbf_analysis.py` |
+| The actual app | `pearson_cbf/` folder |
+| One feature (e.g. FFT) | One file, e.g. `signal_fft.py` |
+| One action inside a file | A **function**, e.g. `compute_cbf()` |
+
+So:
+
+- **`cbf_analysis.py`** = very short **launcher** (only a few lines).
+- **`pearson_cbf/`** = **all the logic** (organized by job).
+- **`cbf_analysis.py`** and **`run_cbf.py`** do the **same thing** — both only start the package.
+
+### Visual summary
+
+```
+cbf_analysis.py  ──►  pearson_cbf/cli.py  ──►  pearson_cbf/pipeline.py
+                              │                      │
+                              │                      ├── io_loaders (read files)
+                              │                      ├── roi_select / roi_store (boxes)
+                              │                      ├── signal_fft (CBF math)
+                              │                      ├── statistics (Q1a–d)
+                              │                      └── plots (figures)
+                              │
+                              └── config.py (settings)
+```
+
+### Flow from `cbf_analysis.py` (plain-language steps)
+
+**You type:**
+
+```text
+python cbf_analysis.py --input "D:\videos" --fps 150 --pixel-um 0.162 --no-prompt
+```
+
+| Step | What runs | What is achieved |
+|------|-----------|------------------|
+| **1** | `cbf_analysis.py` | Calls `pearson_cbf.cli.main()` |
+| **2** | `cli.py` | `build_parser()` reads flags; `resolve_config()` builds `CBFConfig`; calls `run_pipeline(cfg)` |
+| **3** | `config.py` | `CBFConfig` holds folder, fps, 10–40 Hz band, etc.; `validate()` checks settings |
+| **4** | `pipeline.py` | **Conductor:** `discover_files()` → `save_run_manifest()` → loop each video |
+| **4a** | Per video | `process_tiff_file()`: load movie, WT/DS label, get ROIs |
+| **4b** | ROIs | `load_rois()` from JSON **or** `select_rois_interactive()` + `save_rois()` |
+| **4c** | Per ROI | `extract_signal_from_stack()` → `compute_cbf()` → `plot_roi_analysis()` → `CBFResult` |
+| **5** | After all videos | `cbf_all_rois.csv`, `run_statistics()` (Q1a–d), `make_summary_figures()` |
+
+**Done** → files in `YOUR_FOLDER\results\goal1\`
+
+Detailed call tree (TIFF mode):
+
+```text
+run_pipeline
+  └── for each file_path in discover_files(...):
+        process_tiff_file(file_path, cfg, all_results)
+          ├── load_tif_stack(path)                    → np.ndarray (T, Y, X)
+          ├── infer_genotype(path.name)               → "WT" | "DS"
+          ├── _get_rois(cfg, stem, stack[0], name)
+          │     ├── load_rois(output_dir, stem)       → if JSON exists
+          │     └── select_rois_interactive(...)      → else matplotlib UI
+          │           └── save_rois(...)              → rois/<stem>_rois.json
+          └── for each roi in rois:
+                ├── extract_signal_from_stack(stack, roi)
+                ├── _compute_cbf(signal, cfg)
+                ├── plot_roi_analysis(...)            → plots/*.png
+                └── all_results.append(CBFResult(...))
+```
+
+### What each file in `pearson_cbf/` does (simple map)
+
+| File | Role |
+|------|------|
+| `cli.py` | Reads terminal arguments, starts the run |
+| `config.py` | Settings + `config.yaml` + `run_manifest.json` |
+| `pipeline.py` | Main workflow — loops videos and ROIs |
+| `io_loaders.py` | Open `.tif` videos and `.csv` from FIJI |
+| `signal_fft.py` | Math: intensity trace → FFT → CBF (Hz) |
+| `roi_select.py` | Pop-up window: draw rectangles (`n`, `s`, `q`) |
+| `roi_store.py` | Save/load ROI positions as JSON |
+| `genotype.py` | Detect `wt` / `ds` in filename |
+| `statistics.py` | Q1a–Q1d: WT vs DS tests |
+| `plots.py` | Make PNG graphs |
+| `models.py` | Data types: `ROI`, `CBFResult` |
+| `__about__.py` | Version, author, email |
+| `__init__.py` | Makes `pearson_cbf` importable as a package |
+
+### What is achieved at the end?
+
+| Stage | Achievement |
+|-------|-------------|
+| Per ROI | One **CBF number (Hz)** for a patch of beating cilia |
+| Per video | One or more ROIs; optional saved JSON for re-run |
+| Whole run | **`cbf_all_rois.csv`** — all ROIs, all videos |
+| Statistics | Answers **Q1a–Q1d** (WT vs DS, variability, sync, spatial) |
+| Figures | PNGs for lab notebook / presentation |
+| Reproducibility | **`run_manifest.json`** + **`rois/*.json`** record settings and ROIs |
+
+For the numbered **Step 1 → Step 25** table with every function name, see [Section 2](#2-master-execution-table-step-1--step-n) below.
+
+---
+
 ## 1. Entry points (how execution starts)
 
 | You run | What happens |
