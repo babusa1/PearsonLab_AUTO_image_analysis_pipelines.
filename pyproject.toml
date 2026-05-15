@@ -1,0 +1,25 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pearson-cbf"
+version = "1.0.0"
+description = "Pearson Lab Goal 1 — Cilia Beat Frequency analysis"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+  "numpy>=1.24",
+  "pandas>=2.0",
+  "matplotlib>=3.7",
+  "scipy>=1.11",
+  "tifffile>=2023.7.10",
+  "PyYAML>=6.0",
+]
+
+[project.scripts]
+run-cbf = "pearson_cbf.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["pearson_cbf*"]

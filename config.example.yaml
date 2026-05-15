@@ -1,0 +1,27 @@
+# Copy to config.yaml and edit paths for your 12 videos.
+# Run: python run_cbf.py --config config.yaml
+
+paths:
+  input_dir: "C:/path/to/your/12_videos"
+  output_dir: "C:/path/to/your/12_videos/results/goal1"
+
+microscope:
+  fps: 150.0
+  pixel_um: 0.162
+
+analysis:
+  input_mode: tiff      # tiff | csv  (csv = FIJI Z-axis profiles)
+  freq_min_hz: 10.0
+  freq_max_hz: 40.0
+  # Jeong et al. 2022 FreQ defaults — keep identical for ALL samples
+  sliding_window: 2
+  local_sd_filter: 3.0
+  low_power_percent: 20.0
+  non_interactive: false
+
+roi:
+  reuse_saved_rois: true
+  interactive_roi: true
+  min_roi_span: 5
+  rois_per_cell_default: 2
+

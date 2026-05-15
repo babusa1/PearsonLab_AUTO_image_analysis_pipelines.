@@ -1,0 +1,32 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+*.egg-info/
+.dist/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# OS
+Thumbs.db
+.DS_Store
+
+# Lab data (never commit raw microscopy)
+raw_data/
+**/raw_data/**
+
+# Results are local; optionally commit summary CSVs only
+# results/
+
+# Secrets
+.env
+*.key
+
+# IDE
+.idea/
+.vscode/
+
+# Config with local paths
+config.yaml
