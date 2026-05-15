@@ -1,4 +1,22 @@
-"""Load TIFF stacks and FIJI intensity CSVs."""
+"""
+Input file loading (TIFF stacks and FIJI CSV profiles)
+======================================================
+
+Author:        Shreeya Malvi
+Email:          shreeya.malvi@colorado.edu
+Date Created:   2025-05-01
+Date Modified:  2026-05-16
+Version:        1.2.0
+
+Module purpose
+--------------
+Discovers input files in a folder and loads them into NumPy arrays:
+
+- Multi-frame ``.tif`` / ``.tiff`` cilia videos → shape ``(T, Y, X)``
+- FIJI Z-axis profile ``.csv`` files → 1D intensity vs time
+
+See ``docs/FIJI_ZAXIS_EXPORT.md`` for CSV export instructions.
+"""
 
 from __future__ import annotations
 
@@ -11,83 +29,84 @@ import tifffile
 
 
 def discover_files(folder: Path, mode: str, recursive: bool = False) -> list[Path]:
-    if mode == "csv":
-        patterns = ["*.csv", "*.CSV"]
-    else:
-        patterns = ["*.tif", "*.TIF", "*.tiff", "*.TIFF"]
+    """
+    List ``.tif`` or ``.csv`` files in ``folder``.
 
-    files: list[Path] = []
-    for pat in patterns:
+    Parameters
+    ----------
+    mode
+        ``"tiff"`` or ``"csv"``.
+    recursive
+        If True, search subdirectories.
+    """
+    if mode == "csv":
+        patterns = ("*.csv", "*.CSV")
+    else:
+        patterns = ("*.tif", "*.TIF", "*.tiff", "*.TIFF")
+
+    found: list[Path] = []
+    for pattern in patterns:
         if recursive:
-            files.extend(folder.rglob(pat))
+            found.extend(folder.rglob(pattern))
         else:
-            files.extend(folder.glob(pat))
-    return sorted({f.resolve() for f in files})
+            found.extend(folder.glob(pattern))
+    return sorted({p.resolve() for p in found})
 
 
 def load_tif_stack(path: Path) -> np.ndarray:
-    """Load multi-frame stack as (T, Y, X) float64."""
+    """
+    Load a microscopy stack as float64 array ``(T, Y, X)``.
+
+    Handles 2D single frames and 4D stacks (collapses extra dims to time).
+    """
     stack = tifffile.imread(path)
     if stack.ndim == 2:
         stack = stack[np.newaxis, ...]
     elif stack.ndim == 4:
         stack = stack.reshape(-1, stack.shape[-2], stack.shape[-1])
     if stack.ndim != 3:
-        raise ValueError(f"Expected 3D stack (T,Y,X), got shape {stack.shape} for {path.name}")
+        raise ValueError(
+            f"Expected 3D stack (T,Y,X), got shape {stack.shape} for {path.name}"
+        )
     return stack.astype(np.float64)
 
 
 def _read_profile_table(path: Path) -> pd.DataFrame:
-    """Read FIJI-exported profile CSV (comma or tab separated)."""
-    last_err: Exception | None = None
+    """Try comma-, then tab-separated parsing for FIJI exports."""
+    last_error: Exception | None = None
     for kwargs in (
         {"sep": ","},
         {"sep": "\t"},
         {"sep": None, "engine": "python"},
     ):
         try:
-            df = pd.read_csv(
-                path,
-                comment="#",
-                skipinitialspace=True,
-                **kwargs,
-            )
+            df = pd.read_csv(path, comment="#", skipinitialspace=True, **kwargs)
             if df.shape[1] >= 1 and len(df) > 0:
                 return df
         except Exception as exc:
-            last_err = exc
-    raise ValueError(f"Could not parse CSV {path.name}: {last_err}")
+            last_error = exc
+    raise ValueError(f"Could not parse CSV {path.name}: {last_error}")
 
 
 def _column_by_aliases(df: pd.DataFrame, aliases: tuple[str, ...]) -> str | None:
-    cols = {re.sub(r"\s+", " ", c.lower().strip()): c for c in df.columns}
+    """Match column names case-insensitively."""
+    normalized = {re.sub(r"\s+", " ", c.lower().strip()): c for c in df.columns}
     for alias in aliases:
-        if alias in cols:
-            return cols[alias]
+        if alias in normalized:
+            return normalized[alias]
     return None
 
 
 def load_intensity_csv(path: Path) -> np.ndarray:
     """
-    Load FIJI Z-axis profile / Plot Z-axis Profile CSV.
+    Load FIJI Z-axis / Plot Z-axis Profile CSV as a 1D intensity trace.
 
-    Supported layouts
-    -----------------
-    - Columns ``Time`` + ``Mean`` (or ``Gray Value``, ``Intensity``)
-    - Single ``Mean`` column
-    - Two numeric columns → uses the non-monotonic index column as intensity
-    - First row may be headers (standard FIJI export)
-
-    Export in FIJI
-    --------------
-    1. Draw ROI on aligned stack
-    2. Image → Stacks → Plot Z-axis Profile
-    3. List → Save As… → ``*_zprofile.csv``
-    4. One file per ROI; name with ``wt``/``ds``, ``cell``, ``roi`` if possible
+    Raises
+    ------
+    ValueError
+        If no numeric column or fewer than 8 time points.
     """
     df = _read_profile_table(path)
-
-    # Drop all-non-numeric rows (FIJI sometimes adds blanks)
     df = df.dropna(how="all")
 
     intensity_col = _column_by_aliases(
@@ -107,8 +126,7 @@ def load_intensity_csv(path: Path) -> np.ndarray:
     if intensity_col is not None:
         series = pd.to_numeric(df[intensity_col], errors="coerce")
     else:
-        numeric = df.apply(pd.to_numeric, errors="coerce")
-        numeric = numeric.dropna(axis=1, how="all")
+        numeric = df.apply(pd.to_numeric, errors="coerce").dropna(axis=1, how="all")
         if numeric.shape[1] == 0:
             raise ValueError(
                 f"No numeric intensity column in {path.name}. "
@@ -117,17 +135,17 @@ def load_intensity_csv(path: Path) -> np.ndarray:
         if numeric.shape[1] == 1:
             series = numeric.iloc[:, 0]
         else:
-            # Time + Mean: pick column that is not a simple 0..N index
-            best = numeric.shape[1] - 1
-            for i in range(numeric.shape[1]):
-                col = numeric.iloc[:, i].dropna().to_numpy()
+            # Prefer column that is not a simple frame index 0,1,2,...
+            best_col = numeric.shape[1] - 1
+            for col_idx in range(numeric.shape[1]):
+                col = numeric.iloc[:, col_idx].dropna().to_numpy()
                 if len(col) < 3:
                     continue
                 diffs = np.diff(col)
-                if np.allclose(diffs, 1.0) or np.allclose(diffs, col[0] if len(col) > 1 else 1.0):
+                if np.allclose(diffs, 1.0):
                     continue
-                best = i
-            series = numeric.iloc[:, best]
+                best_col = col_idx
+            series = numeric.iloc[:, best_col]
 
     series = series.dropna()
     if len(series) < 8:

@@ -1,9 +1,18 @@
 #!/usr/bin/env python
 """
-Backward-compatible launcher for Pipeline 1 (CBF).
+Pearson Lab — CBF Analysis (backward-compatible launcher)
+=========================================================
 
-Prefer:
-  python run_cbf.py --input YOUR_FOLDER --fps 150 --pixel-um 0.162
+Author:        Shreeya Malvi
+Email:          shreeya.malvi@colorado.edu
+Date Created:   2025-05-01
+Date Modified:  2026-05-16
+Version:        1.2.0
+
+Module purpose
+--------------
+Alias for ``run_cbf.py``. Kept so older instructions that reference
+``python cbf_analysis.py`` continue to work. Prefer ``run_cbf.py`` for new work.
 """
 
 from pearson_cbf.cli import main

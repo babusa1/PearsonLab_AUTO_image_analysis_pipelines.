@@ -1,4 +1,24 @@
-"""Command-line interface for CBF pipeline."""
+"""
+Command-line interface (CLI) for the CBF pipeline
+================================================
+
+Author:        Shreeya Malvi
+Email:          shreeya.malvi@colorado.edu
+Date Created:   2025-05-01
+Date Modified:  2026-05-16
+Version:        1.2.0
+
+Module purpose
+--------------
+Parses user input from the terminal (or ``config.yaml``), builds a ``CBFConfig``
+object with validated paths and microscope settings, and starts ``run_pipeline``.
+
+Functions
+---------
+build_parser      — define all ``--input``, ``--fps``, etc. flags
+resolve_config    — merge CLI args + YAML into ``CBFConfig``
+main              — entry point; returns exit code 0 (success) or 1 (error)
+"""
 
 from __future__ import annotations
 
@@ -10,9 +30,12 @@ from pathlib import Path
 from pearson_cbf.config import CBFConfig, load_config_yaml
 from pearson_cbf.pipeline import run_pipeline
 
+logger = logging.getLogger(__name__)
+
 
 def build_parser() -> argparse.ArgumentParser:
-    p = argparse.ArgumentParser(
+    """Build the argument parser for ``run_cbf.py``."""
+    parser = argparse.ArgumentParser(
         prog="run_cbf",
         description="Pearson Lab Pipeline 1 — Cilia Beat Frequency (Goal 1, Q1a–Q1d)",
         formatter_class=argparse.RawDescriptionHelpFormatter,
@@ -23,35 +46,44 @@ Examples (12 videos in one folder):
   python run_cbf.py --input ./fiji_processed/aligned_videos --fps 150 --pixel-um 0.162 --no-prompt
         """,
     )
-    p.add_argument("--config", "-c", type=Path, help="YAML config file (overrides defaults)")
-    p.add_argument("--input", "-i", type=Path, help="Folder with .tif videos or .csv profiles")
-    p.add_argument("--output", "-o", type=Path, help="Results folder (default: <input>/results/goal1)")
-    p.add_argument("--fps", type=float, help="Microscope frame rate (Hz)")
-    p.add_argument("--pixel-um", type=float, help="Pixel size (µm/pixel)")
-    p.add_argument("--mode", choices=("tiff", "csv"), default=None, help="Input type")
-    p.add_argument("--freq-min", type=float, default=10.0, help="FFT search min (Hz)")
-    p.add_argument("--freq-max", type=float, default=40.0, help="FFT search max (Hz)")
-    p.add_argument(
+    parser.add_argument("--config", "-c", type=Path, help="YAML config file")
+    parser.add_argument("--input", "-i", type=Path, help="Folder with .tif videos or .csv profiles")
+    parser.add_argument(
+        "--output", "-o", type=Path, help="Results folder (default: <input>/results/goal1)"
+    )
+    parser.add_argument("--fps", type=float, help="Microscope frame rate (Hz)")
+    parser.add_argument("--pixel-um", type=float, help="Pixel size (µm/pixel)")
+    parser.add_argument("--mode", choices=("tiff", "csv"), default=None, help="Input type")
+    parser.add_argument("--freq-min", type=float, default=10.0, help="FFT search min (Hz)")
+    parser.add_argument("--freq-max", type=float, default=40.0, help="FFT search max (Hz)")
+    parser.add_argument(
         "--sliding-window",
         type=int,
         default=None,
         help="FreQ: smooth power spectrum (Jeong default 2)",
     )
-    p.add_argument(
+    parser.add_argument(
         "--local-sd-filter",
         type=float,
         default=None,
         help="FreQ: local SD peak threshold (Jeong default 3.0; 0=off)",
     )
-    p.add_argument("--recursive", action="store_true", help="Search subfolders for files")
-    p.add_argument("--no-reuse-rois", action="store_true", help="Force re-draw all ROIs")
-    p.add_argument("--no-interactive", action="store_true", help="Fail if ROIs missing (batch re-run)")
-    p.add_argument("--no-prompt", action="store_true", help="Require --input, --fps, --pixel-um (no dialogs)")
-    p.add_argument("-v", "--verbose", action="store_true")
-    return p
+    parser.add_argument("--recursive", action="store_true", help="Search subfolders for files")
+    parser.add_argument("--no-reuse-rois", action="store_true", help="Force re-draw all ROIs")
+    parser.add_argument(
+        "--no-interactive", action="store_true", help="Fail if ROIs missing (batch re-run)"
+    )
+    parser.add_argument(
+        "--no-prompt",
+        action="store_true",
+        help="Require --input, --fps, --pixel-um (no dialogs)",
+    )
+    parser.add_argument("-v", "--verbose", action="store_true", help="Debug logging")
+    return parser
 
 
 def _pick_folder_dialog() -> Path:
+    """Open a folder picker dialog (requires display / tkinter)."""
     import tkinter as tk
     from tkinter import filedialog
 
@@ -65,6 +97,7 @@ def _pick_folder_dialog() -> Path:
 
 
 def _prompt_float(label: str) -> float:
+    """Prompt until the user enters a valid number."""
     while True:
         raw = input(f"{label}: ").strip()
         try:
@@ -74,6 +107,11 @@ def _prompt_float(label: str) -> float:
 
 
 def resolve_config(args: argparse.Namespace) -> CBFConfig:
+    """
+    Build ``CBFConfig`` from CLI arguments and/or YAML file.
+
+    CLI flags override YAML values when both are provided.
+    """
     if args.config:
         cfg = load_config_yaml(args.config)
         if args.input:
@@ -88,10 +126,11 @@ def resolve_config(args: argparse.Namespace) -> CBFConfig:
             cfg.sliding_window = args.sliding_window
         if args.local_sd_filter is not None:
             cfg.local_sd_filter = args.local_sd_filter
-        if args.mode:
+        if args.mode is not None:
             cfg.input_mode = args.mode
         return cfg
 
+    # Interactive path: folder dialog + prompts unless --no-prompt
     input_dir = args.input
     if input_dir is None:
         if args.no_prompt:
@@ -130,6 +169,14 @@ def resolve_config(args: argparse.Namespace) -> CBFConfig:
 
 
 def main(argv: list[str] | None = None) -> int:
+    """
+    Run the CBF pipeline from the command line.
+
+    Returns
+    -------
+    int
+        0 on success, 1 on failure.
+    """
     args = build_parser().parse_args(argv)
     logging.basicConfig(
         level=logging.DEBUG if args.verbose else logging.INFO,
@@ -140,7 +187,7 @@ def main(argv: list[str] | None = None) -> int:
         cfg = resolve_config(args)
         run_pipeline(cfg, recursive=args.recursive)
     except Exception as exc:
-        logging.error("%s", exc)
+        logger.error("%s", exc)
         return 1
     return 0
 

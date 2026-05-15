@@ -1,5 +1,15 @@
-# Pearson Lab — one-time conda setup (Windows PowerShell)
-# Run: .\scripts\setup_conda.ps1
+# =============================================================================
+# Pearson Lab — Conda environment setup (Windows PowerShell)
+# =============================================================================
+# Author:        Shreeya Malvi
+# Email:          shreeya.malvi@colorado.edu
+# Date Created:   2025-05-01
+# Date Modified:  2026-05-16
+# Version:        1.2.0
+#
+# Purpose: One-time install of the pearsonlab conda environment and package.
+# Usage:   .\scripts\setup_conda.ps1
+# =============================================================================
 
 $ErrorActionPreference = "Stop"
 $Root = Split-Path -Parent (Split-Path -Parent $MyInvocation.MyCommand.Path)

@@ -1,4 +1,25 @@
-"""Interactive multi-ROI selection for Q1c/Q1d."""
+"""
+Interactive multi-ROI selection (matplotlib)
+============================================
+
+Author:        Shreeya Malvi
+Email:          shreeya.malvi@colorado.edu
+Date Created:   2025-05-01
+Date Modified:  2026-05-16
+Version:        1.2.0
+
+Module purpose
+--------------
+Displays the first video frame and lets the user draw rectangular ROIs over
+beating cilia. Supports multiple ROIs per cell for Q1c (within-cell synchrony).
+
+Keyboard shortcuts
+------------------
+n : save ROI and assign to a new cell (or next cell in sequence)
+s : save ROI on the **same cell** as the previous ROI (required for Q1c)
+u : undo last ROI
+q : finish and close window
+"""
 
 from __future__ import annotations
 
@@ -16,86 +37,101 @@ def select_rois_interactive(
     video_label: str = "",
 ) -> list[ROI]:
     """
-    Draw ROIs on the first frame.
+    Open an interactive window to define one or more ROIs.
 
-    Keys
-    ----
-    n : save drawn rectangle as new ROI
-    s : save ROI on **same cell** as previous (use for Q1c — 2+ ROIs/ cell)
-    u : undo last ROI
-    q : finish
+    Parameters
+    ----------
+    first_frame
+        2D image (first frame of the stack).
+    min_roi_span
+        Minimum width/height in pixels.
+    rois_per_cell
+        Default grouping when using ``n`` (pairs of ROIs → cell_1, cell_2, ...).
+    video_label
+        Shown in the window title.
+
+    Returns
+    -------
+    list[ROI]
+        At least one ROI; raises ``ValueError`` if user quits without saving any.
     """
     rois: list[ROI] = []
-    current: dict[str, int] = {}
-    roi_counter = 0
+    pending_rect: dict[str, int] = {}
+    roi_count = 0
     last_cell_id = "cell_1"
 
     title = (
         f"{video_label}\n"
-        "Drag box → press 'n' (new cell) or 's' (same cell, Q1c) → 'q' when done"
+        "Drag box → 'n' (new cell) or 's' (same cell, Q1c) → 'q' when done"
     )
     fig, ax = plt.subplots(figsize=(9, 9))
     ax.imshow(first_frame, cmap="gray")
     ax.set_title(title, fontsize=10)
 
-    def _add_roi(same_cell: bool) -> None:
-        nonlocal roi_counter, last_cell_id
-        if not current:
+    def _commit_roi(same_cell: bool) -> None:
+        nonlocal roi_count, last_cell_id
+        if not pending_rect:
             return
-        roi_counter += 1
+        roi_count += 1
         if same_cell and rois:
             cell_id = last_cell_id
         else:
-            cell_num = (roi_counter - 1) // rois_per_cell + 1
+            cell_num = (roi_count - 1) // rois_per_cell + 1
             cell_id = f"cell_{cell_num}"
             last_cell_id = cell_id
 
         rois.append(
             ROI(
-                x=current["x"],
-                y=current["y"],
-                w=max(current["w"], min_roi_span),
-                h=max(current["h"], min_roi_span),
-                label=f"roi_{roi_counter}",
+                x=pending_rect["x"],
+                y=pending_rect["y"],
+                w=max(pending_rect["w"], min_roi_span),
+                h=max(pending_rect["h"], min_roi_span),
+                label=f"roi_{roi_count}",
                 cell_id=cell_id,
             )
         )
+        color = "cyan" if same_cell else "lime"
         ax.add_patch(
             plt.Rectangle(
-                (current["x"], current["y"]),
-                current["w"],
-                current["h"],
+                (pending_rect["x"], pending_rect["y"]),
+                pending_rect["w"],
+                pending_rect["h"],
                 fill=False,
-                edgecolor="lime" if not same_cell else "cyan",
+                edgecolor=color,
                 linewidth=2,
             )
         )
-        ax.set_title(f"{len(rois)} ROI(s) | last cell: {cell_id}")
+        ax.set_title(f"{len(rois)} ROI(s) saved | cell: {cell_id}")
         fig.canvas.draw_idle()
-        current.clear()
+        pending_rect.clear()
 
-    def onselect(eclick, erelease):
+    def _on_rectangle_select(eclick, erelease):
         if eclick.xdata is None or erelease.xdata is None:
             return
         x1, y1 = int(eclick.xdata), int(eclick.ydata)
         x2, y2 = int(erelease.xdata), int(erelease.ydata)
-        current["x"] = min(x1, x2)
-        current["y"] = min(y1, y2)
-        current["w"] = abs(x2 - x1)
-        current["h"] = abs(y2 - y1)
+        pending_rect["x"] = min(x1, x2)
+        pending_rect["y"] = min(y1, y2)
+        pending_rect["w"] = abs(x2 - x1)
+        pending_rect["h"] = abs(y2 - y1)
 
-    def on_key(event):
+    def _on_key(event):
         if event.key == "n":
-            _add_roi(same_cell=False)
+            _commit_roi(same_cell=False)
         elif event.key == "s":
-            _add_roi(same_cell=True)
+            _commit_roi(same_cell=True)
         elif event.key == "u" and rois:
             rois.pop()
             ax.patches.clear()
-            for r in rois:
+            for saved in rois:
                 ax.add_patch(
                     plt.Rectangle(
-                        (r.x, r.y), r.w, r.h, fill=False, edgecolor="lime", linewidth=2
+                        (saved.x, saved.y),
+                        saved.w,
+                        saved.h,
+                        fill=False,
+                        edgecolor="lime",
+                        linewidth=2,
                     )
                 )
             fig.canvas.draw_idle()
@@ -104,14 +140,14 @@ def select_rois_interactive(
 
     RectangleSelector(
         ax,
-        onselect,
+        _on_rectangle_select,
         useblit=True,
         button=[1],
         minspanx=min_roi_span,
         minspany=min_roi_span,
         interactive=True,
     )
-    fig.canvas.mpl_connect("key_press_event", on_key)
+    fig.canvas.mpl_connect("key_press_event", _on_key)
     plt.show()
 
     if not rois:
