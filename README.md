@@ -38,6 +38,7 @@ python run_cbf.py --input "D:\YOUR_VIDEO_FOLDER" --fps 150 --pixel-um 0.162 --no
 | Document | Contents |
 |----------|----------|
 | **[docs/MASTER_GUIDE.md](docs/MASTER_GUIDE.md)** | **Start here** — problem, CBF method, all files explained, run steps |
+| **[docs/MASTER_GUIDE_DEVELOPER.md](docs/MASTER_GUIDE_DEVELOPER.md)** | **Code workflow** — Step 1→N, what calls what, feature → file map |
 | [docs/LAB_STANDARDS.md](docs/LAB_STANDARDS.md) | Reproducibility and data handling |
 | [docs/FIJI_PREP.md](docs/FIJI_PREP.md) | Drift correction + FreQ before Python |
 | [docs/FIJI_ZAXIS_EXPORT.md](docs/FIJI_ZAXIS_EXPORT.md) | Optional CSV export from FIJI |

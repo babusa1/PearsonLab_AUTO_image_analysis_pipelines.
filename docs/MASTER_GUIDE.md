@@ -4,6 +4,8 @@
 
 **GitHub repository:** [babusa1/PearsonLab_AUTO_image_analysis_pipelines.](https://github.com/babusa1/PearsonLab_AUTO_image_analysis_pipelines.)
 
+**Developers (code flow):** [MASTER_GUIDE_DEVELOPER.md](MASTER_GUIDE_DEVELOPER.md) — Step 1→N execution table, feature-to-file map, call graph.
+
 ---
 
 ## Quick reference (start here)
