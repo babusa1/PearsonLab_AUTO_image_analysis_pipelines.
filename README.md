@@ -1,6 +1,6 @@
 # Pearson Lab — Pipeline 1: Cilia Beat Frequency (CBF)
 
-[![GitHub](https://img.shields.io/badge/GitHub-PearsonLab_AUTO_image_analysis_pipelines-blue)](https://github.com/babusa1/PearsonLab_AUTO_image_analysis_pipelines)
+[![GitHub](https://img.shields.io/badge/GitHub-PearsonLab_AUTO_image_analysis_pipelines.-blue)](https://github.com/babusa1/PearsonLab_AUTO_image_analysis_pipelines.)
 
 Automated analysis of **cilia beat frequency (CBF)** in **wild-type (WT)** vs **Down syndrome (DS)** mouse airway videos (Goal 1).
 

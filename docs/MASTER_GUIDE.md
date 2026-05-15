@@ -2,7 +2,7 @@
 
 **Read this first.** It explains the biology, the code, every folder, and how to run the project — written for someone new to Python.
 
-**GitHub repository:** [PearsonLab_AUTO_image_analysis_pipelines](https://github.com/babusa1/PearsonLab_AUTO_image_analysis_pipelines)
+**GitHub repository:** [babusa1/PearsonLab_AUTO_image_analysis_pipelines.](https://github.com/babusa1/PearsonLab_AUTO_image_analysis_pipelines.)
 
 ---
 
@@ -51,8 +51,8 @@ Helper scripts (e.g. one-time conda setup). **Not** the main analysis.
 ### First time on a new computer
 
 ```powershell
-git clone https://github.com/babusa1/PearsonLab_AUTO_image_analysis_pipelines.git
-cd PearsonLab_AUTO_image_analysis_pipelines
+git clone https://github.com/babusa1/PearsonLab_AUTO_image_analysis_pipelines..git
+cd PearsonLab_AUTO_image_analysis_pipelines.
 
 conda env create -f environment.yml
 conda activate pearsonlab
