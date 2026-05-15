@@ -10,6 +10,25 @@
 
 ---
 
+## Goal 1 as an orchestrated pipeline (what you already have)
+
+Think of Goal 1 as **stages** with clear handoffs from acquisition through publication-ready stats:
+
+| Stage | Role | Artifact |
+|-------|------|----------|
+| **0 — Acquire** | Microscope | Raw `.tif` (policy: don’t overwrite) |
+| **1 — Preprocess (FIJI)** | Drift, QC | Aligned stacks; FreQ optional QC |
+| **2 — Configure** | Human | `config.yaml` or CLI (`fps`, bands, paths) |
+| **3 — Segment intent** | Human + tool | ROIs (draw or FIJI CSV); saved as JSON |
+| **4 — Quantify** | Python FFT | `cbf_hz` per ROI |
+| **5 — Aggregate** | Python | `cbf_all_rois.csv` |
+| **6 — Infer** | Python stats | Q1a–Q1d summaries + PNGs |
+| **7 — Model (paper)** | R | Mixed models + Figure 1 |
+
+**Orchestration engine today:** you run **`run_cbf.py`** once → it walks **stages 2→6** in order for every video (discover files → load → ROI → FFT → collect → stats → plots). That **is** a pipeline; the **orchestrator** is **`pipeline.run_pipeline`** (called from `cli.main`). Stages 0–1 are **outside** this repo (FIJI / microscope policy); stage **7** is **outside** Python (R on exported CSV).
+
+---
+
 ## 0. What is `pearson_cbf`? (not a single function)
 
 `pearson_cbf` is a **Python package** — a **folder of modules** (`.py` files) that contain the real program. Think of it like an app split into chapters:
