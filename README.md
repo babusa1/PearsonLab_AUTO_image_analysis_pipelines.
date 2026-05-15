@@ -17,15 +17,19 @@ This repo is **Pipeline 1 only**. Goals 2 (bead flow) and 3 (centrioles) are sep
 
 ---
 
-## Quick run (12 videos)
+## Install & run on **your** machine
+
+Folder paths **change on every computer**. Use **[docs/DEPLOYMENT.md](docs/DEPLOYMENT.md)** for full step-by-step setup (`PROJECT_ROOT`, `VIDEO_FOLDER`, conda, first run).
+
+**Quick pattern** (replace `<PROJECT_ROOT>` and `<VIDEO_FOLDER>` with your real paths):
 
 ```powershell
 conda activate pearsonlab
-cd "c:\Resume\Shreya\pearson lab"
-python run_cbf.py --input "D:\YOUR_VIDEO_FOLDER" --fps 150 --pixel-um 0.162 --no-prompt
+cd "<PROJECT_ROOT>"
+python run_cbf.py --input "<VIDEO_FOLDER>" --fps 150 --pixel-um 0.162 --no-prompt
 ```
 
-**Install once:** `conda env create -f environment.yml` then `pip install -e .`
+**Install once:** from `<PROJECT_ROOT>` run `conda env create -f environment.yml` then `pip install -e .` — details in **DEPLOYMENT.md**.
 
 **ROI keys:** draw box → `n` (new cell) or `s` (same cell) → `q` (next video)
 
@@ -37,6 +41,7 @@ python run_cbf.py --input "D:\YOUR_VIDEO_FOLDER" --fps 150 --pixel-um 0.162 --no
 
 | Document | Contents |
 |----------|----------|
+| **[docs/DEPLOYMENT.md](docs/DEPLOYMENT.md)** | **Install on any PC** — placeholders, no fixed drive letters |
 | **[docs/MASTER_GUIDE.md](docs/MASTER_GUIDE.md)** | **Start here** — problem, CBF method, all files explained, run steps |
 | **[docs/MASTER_GUIDE_DEVELOPER.md](docs/MASTER_GUIDE_DEVELOPER.md)** | **Code workflow** — Step 1→N, what calls what, feature → file map |
 | [docs/LAB_STANDARDS.md](docs/LAB_STANDARDS.md) | Reproducibility and data handling |

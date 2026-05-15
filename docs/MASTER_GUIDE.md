@@ -6,7 +6,7 @@
 
 **Developers (code flow):** [MASTER_GUIDE_DEVELOPER.md](MASTER_GUIDE_DEVELOPER.md) — what `pearson_cbf` is (package vs launcher), full flow from `cbf_analysis.py`, Step 1→25 table, feature-to-file map.
 
----
+**Deploy on any PC:** [DEPLOYMENT.md](DEPLOYMENT.md) — conda install, placeholders for paths.
 
 ## Quick reference (start here)
 
@@ -64,10 +64,12 @@ pip install -e .
 ### If you already have the folder
 
 ```powershell
-cd "c:\Resume\Shreya\pearson lab"
+cd "<PROJECT_ROOT>"
 git pull
 conda activate pearsonlab
 ```
+
+(`<PROJECT_ROOT>` = wherever this repo lives on **your** machine — see **[DEPLOYMENT.md](DEPLOYMENT.md)**.)
 
 ---
 
@@ -75,13 +77,14 @@ conda activate pearsonlab
 
 ```powershell
 conda activate pearsonlab
-cd "c:\Resume\Shreya\pearson lab"
-python run_cbf.py --input "D:\YOUR_FOLDER_WITH_12_TIFS" --fps 150 --pixel-um 0.162 --no-prompt
+cd "<PROJECT_ROOT>"
+python run_cbf.py --input "<VIDEO_FOLDER>" --fps 150 --pixel-um 0.162 --no-prompt
 ```
 
 Replace:
 
-- `D:\YOUR_FOLDER_WITH_12_TIFS` — folder containing all `.tif` files  
+- `<PROJECT_ROOT>` — folder that contains `run_cbf.py` (your clone / copy of this repo)  
+- `<VIDEO_FOLDER>` — folder containing all `.tif` files  
 - `150` — your **fps** from FIJI (**Image → Properties** → fps = 1 ÷ frame interval)  
 - `0.162` — your **µm/pixel** calibration  
 
@@ -330,12 +333,14 @@ analysis:
 
 ## Part 6 — Step-by-step: install and run (12 videos)
 
+**Paths differ on every computer.** See **[DEPLOYMENT.md](DEPLOYMENT.md)** for the full checklist with placeholders `<PROJECT_ROOT>` and `<VIDEO_FOLDER>`. Below is the same idea in short form.
+
 ### A. One-time installation (Windows)
 
-Open **PowerShell**:
+Open **PowerShell**. Go to **your** clone of this repo (folder that contains `environment.yml`):
 
 ```powershell
-cd "c:\Resume\Shreya\pearson lab"
+cd "<PROJECT_ROOT>"
 
 conda env create -f environment.yml
 conda activate pearsonlab
@@ -346,7 +351,7 @@ If `conda` is not installed, install [Miniconda](https://docs.conda.io/en/latest
 
 ### B. Prepare your videos
 
-1. Put **12** `.tif` files in one folder, e.g. `D:\pearson_data\cilia_batch1\`
+1. Put `.tif` files in **any** folder — call it `<VIDEO_FOLDER>` (e.g. `D:\pearson_data\cilia_batch1\`).
 2. Names must include **`wt`** or **`ds`**, e.g. `wt_mouse1_aligned.tif`
 3. Prefer **drift-corrected** files from FIJI (see `FIJI_PREP.md`)
 
@@ -364,9 +369,9 @@ Write these in your lab notebook.
 
 ```powershell
 conda activate pearsonlab
-cd "c:\Resume\Shreya\pearson lab"
+cd "<PROJECT_ROOT>"
 
-python run_cbf.py --input "D:\pearson_data\cilia_batch1" --fps 150 --pixel-um 0.162 --no-prompt
+python run_cbf.py --input "<VIDEO_FOLDER>" --fps 150 --pixel-um 0.162 --no-prompt
 ```
 
 **For each video** a window opens:
@@ -387,7 +392,11 @@ Same command. ROIs load from `results/goal1/rois/` automatically.
 
 ### F. Alternative: use config file
 
+From `<PROJECT_ROOT>`:
+
 ```powershell
+cd "<PROJECT_ROOT>"
+conda activate pearsonlab
 copy config.example.yaml config.yaml
 # Edit config.yaml in Notepad — set input_dir, fps, pixel_um
 
@@ -493,8 +502,10 @@ Only **Goal 1 (CBF)** is in this repository.
 
 ```powershell
 conda activate pearsonlab
-cd "c:\Resume\Shreya\pearson lab"
-python run_cbf.py --input "YOUR_VIDEO_FOLDER" --fps 150 --pixel-um 0.162 --no-prompt
+cd "<PROJECT_ROOT>"
+python run_cbf.py --input "<VIDEO_FOLDER>" --fps 150 --pixel-um 0.162 --no-prompt
 ```
 
-Outputs: `YOUR_VIDEO_FOLDER\results\goal1\`
+Outputs: `<VIDEO_FOLDER>\results\goal1\`  
+
+Full deploy steps: **[DEPLOYMENT.md](DEPLOYMENT.md)**
